@@ -37,7 +37,7 @@ public class NetworkedServer : MonoBehaviour
         _message = new MessageType();
         connectedClients = new List<int>();
         gameRooms = new List<GameRoom>();
-        
+
 
 
     }
@@ -102,7 +102,7 @@ public class NetworkedServer : MonoBehaviour
     //PROCESS ALL MESSAGES RECEIVED FROM CLIENTS
     private void ProcessRecievedMsg(string msg, int id)
     {
-        Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
+        Debug.Log("msg recieved = " + msg + " connection id = " + id);
         
         string[] message = msg.Split(',');
         
@@ -125,16 +125,38 @@ public class NetworkedServer : MonoBehaviour
                 if (room.roomName == roomName)
                 {
                     //SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID), id);
-                    
+                   
                     
                     if (room.player2ID == null)
                         room.player2ID = id.ToString();
-
-
+                    if (room.player1ID == null)
+                        room.player1ID = id.ToString();
+                    
+                    
+                    /*if (room.player1ID != null && room.player2ID != null)
+                    {
+                        room.spectator1 = id.ToString();
+                        room.spectatorIDs.Add(id);
+                        Debug.Log("Added " + id + " Spectator");
+                    }
+                    if (room.player1ID != null && room.player2ID != null && room.spectator1 != null)
+                    {
+                        room.spectator2 = id.ToString();
+                        room.spectatorIDs.Add(id);
+                        Debug.Log("Added " + id + " Spectator");
+                    }*/
+                    
                     List<string> IDs = new List<string>();
                     
                     IDs.Add(room.player1ID);
                     IDs.Add(room.player2ID);
+
+                    /*foreach (var spectatorID in room.spectatorIDs)
+                    {
+                        IDs.Add(spectatorID.ToString());
+                        
+                    }*/
+
 
                     foreach (var pID in IDs)
                     {
@@ -154,7 +176,7 @@ public class NetworkedServer : MonoBehaviour
             {
                 if (gameRoom.roomName == message[1])
                 {
-                    SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.player1ID), id);
+                    SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.player1ID + "," + gameRoom.player2ID), id);
                     return;
                 }
             }
@@ -162,15 +184,16 @@ public class NetworkedServer : MonoBehaviour
             //Create new gameroom and assign values.
             GameRoom room = new GameRoom(roomName);
             room.player1ID = id.ToString();
-            
+            room.spectatorIDs = new List<int>();
             //Add gameroom to list of active game rooms.
             gameRooms.Add(room);
             
+            //Send
             SendMessageToClient((_message.Create + "," + roomName + "," + id), id);
         }
         else if (message[0] == _message.PlayerCount)
         {
-            //Send connected players count to all clients
+            
             
         }
         else if (message[0] == _message.Leave)
@@ -179,22 +202,47 @@ public class NetworkedServer : MonoBehaviour
             {
                 if (message[1] == room.roomName)
                 {
+                    
+                    List<string> IDs = new List<string>();
+                    
+                    //Create list of all players/spec inside game to send message to them to update UI.
+                    IDs.Add(room.player1ID);
+                    IDs.Add(room.player2ID);
+                    
+                    
+                    
+                    //If player who LEFT matches with ID inside game room, remove from game room.
+                    
                     if (id.ToString() == room.player1ID)
                     {
-                        room.player1ID = "";
+                        room.player1ID = null;
                         
+                    }
+                    else if (id.ToString() == room.player2ID)
+                    {
+                        room.player2ID = null;
+                        
+                    }
+                    
+                    
+                    foreach (var pID in IDs)
+                    {
+                        Debug.Log(pID + "SENDING ! :" + _message.Leave + "," + room.roomName + "," + id);
+                        SendMessageToClient(_message.Leave + "," + room.roomName + "," + id, Convert.ToInt32(pID));
                     }
                 }
             }
         }
+        else if (message[0] == _message.MakeMove)
+        {
+            
+        }
     }
-    
-    
-    
 
-   
-        
-
+    private void SpectatorJoin()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 
