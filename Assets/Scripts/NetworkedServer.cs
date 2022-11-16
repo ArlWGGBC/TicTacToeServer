@@ -87,15 +87,7 @@ public class NetworkedServer : MonoBehaviour
         {
             Debug.Log("Sending message to : " + connection + " : " + _message.PlayerCount + connectedClients.Count);
             SendMessageToClient(_message.PlayerCount + "," + connectedClients.Count, connection);
-        }
-       
-    }
-    
-    public void SendPlayersInfo()
-    {
-        foreach (var connection in connectedClients)
-        {
-            SendMessageToClient("PLAYERCOUNT," + connectedClients.Count, connection);
+            
         }
        
     }
@@ -126,11 +118,28 @@ public class NetworkedServer : MonoBehaviour
             //Assign values from message for clarity
             string roomName = message[1];
             
+            
+            
             foreach (var room in gameRooms)
             {
                 if (room.roomName == roomName)
                 {
-                    SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID), id);
+                    //SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID), id);
+                    
+                    
+                    if (room.player2ID == null)
+                        room.player2ID = id.ToString();
+
+
+                    List<string> IDs = new List<string>();
+                    
+                    IDs.Add(room.player1ID);
+                    IDs.Add(room.player2ID);
+
+                    foreach (var pID in IDs)
+                    {
+                        SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID + "," + room.player2ID), Convert.ToInt32(pID));
+                    }
                 }
             }
         }
@@ -138,6 +147,17 @@ public class NetworkedServer : MonoBehaviour
         {
             //Assign values from message for clarity
             string roomName = message[1];
+
+
+
+            foreach (var gameRoom in gameRooms)
+            {
+                if (gameRoom.roomName == message[1])
+                {
+                    SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.player1ID), id);
+                    return;
+                }
+            }
             
             //Create new gameroom and assign values.
             GameRoom room = new GameRoom(roomName);
@@ -153,7 +173,22 @@ public class NetworkedServer : MonoBehaviour
             //Send connected players count to all clients
             
         }
+        else if (message[0] == _message.Leave)
+        {
+            foreach (var room in gameRooms)
+            {
+                if (message[1] == room.roomName)
+                {
+                    if (id.ToString() == room.player1ID)
+                    {
+                        room.player1ID = "";
+                        
+                    }
+                }
+            }
+        }
     }
+    
     
     
 

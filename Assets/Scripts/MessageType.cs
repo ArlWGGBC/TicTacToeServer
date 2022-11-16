@@ -13,4 +13,6 @@ public class MessageType
 
     public string Joined = "Joined";
 
+    public string Leave = "Leave";
+
 }
