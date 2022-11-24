@@ -125,23 +125,20 @@ public class NetworkedServer : MonoBehaviour
                 if (room.roomName == roomName)
                 {
                     
-                    if (room.player2ID == null)
-                        room.player2ID = id.ToString();
-                    if (room.player1ID == null)
-                        room.player1ID = id.ToString();
                     
                     
                     List<string> ds = new List<string>();
                     if (ds == null) throw new ArgumentNullException(nameof(ds));
 
-                    ds.Add(room.player1ID);
-                    ds.Add(room.player2ID);
-                    
 
-
-                    foreach (var pID in ds)
+                    foreach (var iD in room.playerIDs)
                     {
-                        SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID + "," + room.player2ID), Convert.ToInt32(pID));
+                        ds.Add(id.ToString());
+                    }
+
+                    foreach (var pID in room.playerIDs)
+                    {
+                        SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.playerIDs[0] + "," + room.playerIDs[1]), Convert.ToInt32(pID));
                     }
                 }
             }
@@ -157,15 +154,18 @@ public class NetworkedServer : MonoBehaviour
             {
                 if (gameRoom.roomName == message[1])
                 {
-                    SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.player1ID + "," + gameRoom.player2ID), id);
+                    Debug.Log("Adding player : " + id.ToString());
+                    gameRoom.playerIDs.Add(id.ToString());
+                    SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.playerIDs[0]+ "," + gameRoom.playerIDs[1]), id);
                     return;
                 }
             }
             
             //Create new gameroom and assign values.
             GameRoom room = new GameRoom(roomName);
-            room.player1ID = id.ToString();
-            
+            Debug.Log("Adding player : " + id.ToString());
+            room.playerIDs.Add(id.ToString());
+
             //Add gameroom to list of active game rooms.
             gameRooms.Add(room);
             
@@ -188,22 +188,21 @@ public class NetworkedServer : MonoBehaviour
                     if (ds == null) throw new ArgumentNullException(nameof(ds));
 
                     //Create list of all players/spec inside game to send message to them to update UI.
-                    ds.Add(room.player1ID);
-                    ds.Add(room.player2ID);
-                    
+                    foreach (var playerID in room.playerIDs)
+                    {
+                        ds.Add(playerID);
+                    }
                     
                     
                     //If player who LEFT matches with ID inside game room, remove from game room.
-                    
-                    if (id.ToString() == room.player1ID)
+
+                    foreach (var identity in room.playerIDs)
                     {
-                        room.player1ID = null;
-                        
-                    }
-                    else if (id.ToString() == room.player2ID)
-                    {
-                        room.player2ID = null;
-                        
+                        if (identity == id.ToString())
+                        {
+                            room.playerIDs.Remove(id.ToString());
+                            break;
+                        }
                     }
                     
                     
@@ -217,23 +216,23 @@ public class NetworkedServer : MonoBehaviour
         }
         else if (message[0] == _message.Message)
         {
-            Debug.Log("Gameroom :" + message[1]);
+
             foreach (var room in gameRooms)
             {
 
                 if (room.roomName == message[1])
                 {
-                    Debug.Log("Sending out Message" + message[3]);
                     foreach (var playerID in room.playerIDs)
                     {
-                        SendMessageToClient(_message.Message + "," + message[2] + "," + message[3], Convert.ToInt32(playerID));
+                        Debug.Log("PLAYERID : " + playerID + "Sending Message : " + message[2] + " + " + id);
+                        SendMessageToClient(_message.Message + "," + message[2] + "," + id, Convert.ToInt32(playerID));
                     }
 
-                    foreach (var spectatorID in room.spectatorIDs)
+                    /*foreach (var spectatorID in room.spectatorIDs)
                     {
                         Debug.Log(message[2] + " " + message[3]);
                         SendMessageToClient(_message.Message + "," + message[2] + "," + message[3], Convert.ToInt32(spectatorID));
-                    }
+                    }*/
                 }
             }
         }
