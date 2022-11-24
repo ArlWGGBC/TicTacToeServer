@@ -124,8 +124,6 @@ public class NetworkedServer : MonoBehaviour
             {
                 if (room.roomName == roomName)
                 {
-                    //SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID), id);
-                   
                     
                     if (room.player2ID == null)
                         room.player2ID = id.ToString();
@@ -133,32 +131,15 @@ public class NetworkedServer : MonoBehaviour
                         room.player1ID = id.ToString();
                     
                     
-                    /*if (room.player1ID != null && room.player2ID != null)
-                    {
-                        room.spectator1 = id.ToString();
-                        room.spectatorIDs.Add(id);
-                        Debug.Log("Added " + id + " Spectator");
-                    }
-                    if (room.player1ID != null && room.player2ID != null && room.spectator1 != null)
-                    {
-                        room.spectator2 = id.ToString();
-                        room.spectatorIDs.Add(id);
-                        Debug.Log("Added " + id + " Spectator");
-                    }*/
+                    List<string> ds = new List<string>();
+                    if (ds == null) throw new ArgumentNullException(nameof(ds));
+
+                    ds.Add(room.player1ID);
+                    ds.Add(room.player2ID);
                     
-                    List<string> IDs = new List<string>();
-                    
-                    IDs.Add(room.player1ID);
-                    IDs.Add(room.player2ID);
-
-                    /*foreach (var spectatorID in room.spectatorIDs)
-                    {
-                        IDs.Add(spectatorID.ToString());
-                        
-                    }*/
 
 
-                    foreach (var pID in IDs)
+                    foreach (var pID in ds)
                     {
                         SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.player1ID + "," + room.player2ID), Convert.ToInt32(pID));
                     }
@@ -184,7 +165,7 @@ public class NetworkedServer : MonoBehaviour
             //Create new gameroom and assign values.
             GameRoom room = new GameRoom(roomName);
             room.player1ID = id.ToString();
-            room.spectatorIDs = new List<int>();
+            
             //Add gameroom to list of active game rooms.
             gameRooms.Add(room);
             
@@ -203,11 +184,12 @@ public class NetworkedServer : MonoBehaviour
                 if (message[1] == room.roomName)
                 {
                     
-                    List<string> IDs = new List<string>();
-                    
+                    List<string> ds = new List<string>();
+                    if (ds == null) throw new ArgumentNullException(nameof(ds));
+
                     //Create list of all players/spec inside game to send message to them to update UI.
-                    IDs.Add(room.player1ID);
-                    IDs.Add(room.player2ID);
+                    ds.Add(room.player1ID);
+                    ds.Add(room.player2ID);
                     
                     
                     
@@ -225,7 +207,7 @@ public class NetworkedServer : MonoBehaviour
                     }
                     
                     
-                    foreach (var pID in IDs)
+                    foreach (var pID in ds)
                     {
                         Debug.Log(pID + "SENDING ! :" + _message.Leave + "," + room.roomName + "," + id);
                         SendMessageToClient(_message.Leave + "," + room.roomName + "," + id, Convert.ToInt32(pID));
