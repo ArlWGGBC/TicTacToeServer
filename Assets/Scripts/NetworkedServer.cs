@@ -215,6 +215,28 @@ public class NetworkedServer : MonoBehaviour
                 }
             }
         }
+        else if (message[0] == _message.Message)
+        {
+            Debug.Log("Gameroom :" + message[1]);
+            foreach (var room in gameRooms)
+            {
+
+                if (room.roomName == message[1])
+                {
+                    Debug.Log("Sending out Message" + message[3]);
+                    foreach (var playerID in room.playerIDs)
+                    {
+                        SendMessageToClient(_message.Message + "," + message[2] + "," + message[3], Convert.ToInt32(playerID));
+                    }
+
+                    foreach (var spectatorID in room.spectatorIDs)
+                    {
+                        Debug.Log(message[2] + " " + message[3]);
+                        SendMessageToClient(_message.Message + "," + message[2] + "," + message[3], Convert.ToInt32(spectatorID));
+                    }
+                }
+            }
+        }
         else if (message[0] == _message.MakeMove)
         {
             

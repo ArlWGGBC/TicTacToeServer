@@ -13,6 +13,7 @@ public class GameRoom
     
     
     public List<string> playerIDs;
+    public List<string> spectatorIDs;
     
    
     
