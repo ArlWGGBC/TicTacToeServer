@@ -8,10 +8,15 @@ using UnityEngine.Networking;
 using System.IO;
 using System.Linq;
 using TMPro;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 public class NetworkedServer : MonoBehaviour
 {
+    
+    [EnumHelper(typeof(TileType))]
+    public TileType Tiles { get; set; }
+    
     int maxConnections = 1000;
     int reliableChannelID;
     int unreliableChannelID;
@@ -118,28 +123,34 @@ public class NetworkedServer : MonoBehaviour
             //Assign values from message for clarity
             string roomName = message[1];
             
-            
-            
             foreach (var room in gameRooms)
             {
                 if (room.roomName == roomName)
                 {
-                    
-                    
-                    
-                    List<string> ds = new List<string>();
-                    if (ds == null) throw new ArgumentNullException(nameof(ds));
-
-
-                    foreach (var iD in room.playerIDs)
-                    {
-                        ds.Add(id.ToString());
-                    }
 
                     foreach (var pID in room.playerIDs)
                     {
-                        SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.playerIDs[0] + "," + room.playerIDs[1]), Convert.ToInt32(pID));
+                        SendMessageToClient((_message.Joined + "," + room.roomName + "," + room.playerIDs[0] + "," + room.playerIDs[1]) + "," + room._Tiles[0] + "," + room._Tiles[0]+ "," + room._Tiles[0] + "," + room._Tiles[0] + "," + room._Tiles[0] + "," + room._Tiles[0] + "," + room._Tiles[0] + "," + room._Tiles[0] + "," + room._Tiles[0], + Convert.ToInt32(pID));
                     }
+
+                    if (room.playerIDs.Count > 1)
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            if (i % 2 == 0)
+                            {
+                                SendMessageToClient(_message.GameStart + "," + TileType.X.ToString(), Convert.ToInt32(room.playerIDs[i]));
+                                Debug.Log((room.playerIDs[i] + " : Assigned : " + TileType.X));
+                            }
+                            else
+                            {
+                                SendMessageToClient(_message.GameStart + "," + TileType.O.ToString(), Convert.ToInt32(room.playerIDs[i]));
+                                Debug.Log(room.playerIDs[i] + " : Assigned : " + TileType.O);
+                            }
+                        
+                        }
+                    }
+                    
                 }
             }
         }
@@ -157,6 +168,16 @@ public class NetworkedServer : MonoBehaviour
                     Debug.Log("Adding player : " + id.ToString());
                     gameRoom.playerIDs.Add(id.ToString());
                     SendMessageToClient((_message.Join + "," + roomName + "," + gameRoom.playerIDs[0]+ "," + gameRoom.playerIDs[1]), id);
+
+                    if (id == 1)
+                    {
+                        SendMessageToClient(_message.GameStart + "," + roomName + "," + "O", id);
+                    }
+                    else
+                    {
+                        SendMessageToClient(_message.GameStart + "," + roomName + "," + "X", id);
+                    }
+                   
                     return;
                 }
             }
@@ -237,6 +258,38 @@ public class NetworkedServer : MonoBehaviour
             }
         }
         else if (message[0] == _message.MakeMove)
+        {
+            //client._message.MakeMove[0] + "," + client._currentRoom[1] + "," + client.identity[2] + "," + boardPosition[3]
+            
+            //TODO: Store tic tac toe data inside GameRoom
+            foreach (var room in gameRooms)
+            {
+                Debug.Log("Roomname" + room.roomName + "   message :" + message[1]);
+                //TODO : Fix identifier logic
+                if (room.roomName == message[1])
+                {
+
+                    foreach (var tile in room._Tiles)
+                    {
+                        if (Convert.ToInt32(message[3]) == tile._position)
+                        {
+                            Debug.Log("New Move : " + message[3] + " : " + message[2]);
+                            tile._tileType = message[2];
+
+                        }
+                    }
+                    
+                    //Debug.Log((GameRoom.TileType)Enum.Parse(typeof(GameRoom.TileType), message[2]));
+                    foreach (var playerID in room.playerIDs)
+                    {
+                        //makemove[0] , boardposition[1] , identity[2]
+                        SendMessageToClient(_message.MakeMove + "," + message[3] + "," + message[2], Convert.ToInt32(playerID));
+                    }
+                    
+                }
+            }
+        }
+        else if (message[0] == _message.GameStart)
         {
             
         }

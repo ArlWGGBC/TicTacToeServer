@@ -20,4 +20,6 @@ public class MessageType
     public string MakeMove = "Move";
 
     public string Message = "Message";
+
+    public string GameStart = "GameStart";
 }
