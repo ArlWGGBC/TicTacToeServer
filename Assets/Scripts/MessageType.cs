@@ -22,4 +22,6 @@ public class MessageType
     public string Message = "Message";
 
     public string GameStart = "GameStart";
+
+    public string GameWon = "Won";
 }

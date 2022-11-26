@@ -7,13 +7,30 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using TMPro;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 public class NetworkedServer : MonoBehaviour
 {
-    
+    private static NetworkedServer instance = null;
+
+    private NetworkedServer()
+    {
+    }
+
+    public static NetworkedServer Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = new NetworkedServer();
+            }
+            return instance;
+        }
+    }
     [EnumHelper(typeof(TileType))]
     public TileType Tiles { get; set; }
     
@@ -23,7 +40,7 @@ public class NetworkedServer : MonoBehaviour
     int hostID;
     int socketPort = 8000;
 
-    private MessageType _message;
+    public MessageType _message;
     private List<int> connectedClients;
     private List<GameRoom> gameRooms;
 
@@ -32,6 +49,8 @@ public class NetworkedServer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        instance = this;
+
         NetworkTransport.Init();
         ConnectionConfig config = new ConnectionConfig();
         reliableChannelID = config.AddChannel(QosType.Reliable);
@@ -43,7 +62,7 @@ public class NetworkedServer : MonoBehaviour
         connectedClients = new List<int>();
         gameRooms = new List<GameRoom>();
 
-
+        StartCoroutine(GameRooms());
 
     }
 
@@ -204,7 +223,7 @@ public class NetworkedServer : MonoBehaviour
             {
                 if (message[1] == room.roomName)
                 {
-                    
+
                     List<string> ds = new List<string>();
                     if (ds == null) throw new ArgumentNullException(nameof(ds));
 
@@ -213,9 +232,15 @@ public class NetworkedServer : MonoBehaviour
                     {
                         ds.Add(playerID);
                     }
-                    
-                    
+
+
                     //If player who LEFT matches with ID inside game room, remove from game room.
+
+                    foreach (var pID in room.playerIDs)
+                    {
+                        Debug.Log(pID + "SENDING ! :" + _message.Leave + "," + room.roomName + "," + id);
+                        SendMessageToClient(_message.Leave + "," + room.roomName + "," + id, Convert.ToInt32(pID));
+                    }
 
                     foreach (var identity in room.playerIDs)
                     {
@@ -225,12 +250,10 @@ public class NetworkedServer : MonoBehaviour
                             break;
                         }
                     }
-                    
-                    
-                    foreach (var pID in ds)
+
+                    if (room.playerIDs.Count == 0)
                     {
-                        Debug.Log(pID + "SENDING ! :" + _message.Leave + "," + room.roomName + "," + id);
-                        SendMessageToClient(_message.Leave + "," + room.roomName + "," + id, Convert.ToInt32(pID));
+                        gameRooms.Remove(room);
                     }
                 }
             }
@@ -259,8 +282,7 @@ public class NetworkedServer : MonoBehaviour
         }
         else if (message[0] == _message.MakeMove)
         {
-            //client._message.MakeMove[0] + "," + client._currentRoom[1] + "," + client.identity[2] + "," + boardPosition[3]
-            
+
             //TODO: Store tic tac toe data inside GameRoom
             foreach (var room in gameRooms)
             {
@@ -268,16 +290,36 @@ public class NetworkedServer : MonoBehaviour
                 //TODO : Fix identifier logic
                 if (room.roomName == message[1])
                 {
-
+                    //If last moved player makes another move, return;
+                    if (message[2] == room.lastMoved.ToString())
+                    {
+                        return;
+                    }
+                    
+                    //Last moved set to identifier of client who sent move message.
+                    room.lastMoved = message[2];
+                    
                     foreach (var tile in room._Tiles)
                     {
                         if (Convert.ToInt32(message[3]) == tile._position)
                         {
-                            Debug.Log("New Move : " + message[3] + " : " + message[2]);
-                            tile._tileType = message[2];
+                            if (tile._tileType == TileType.N.ToString())
+                            {
+                                
+                                Debug.Log("New Move : " + message[3] + " : " + message[2]);
+                                tile._tileType = message[2];
+                                
+                                
+                                room.MoveRecord.Add(tile);
+                                
+                                break;
+                            }
+                            
 
                         }
                     }
+                    
+                    
                     
                     //Debug.Log((GameRoom.TileType)Enum.Parse(typeof(GameRoom.TileType), message[2]));
                     foreach (var playerID in room.playerIDs)
@@ -286,6 +328,8 @@ public class NetworkedServer : MonoBehaviour
                         SendMessageToClient(_message.MakeMove + "," + message[3] + "," + message[2], Convert.ToInt32(playerID));
                     }
                     
+                    int[] position = room.PositionHelper(Convert.ToInt32(message[3]));
+                    room.MakeMove(position[0] - 1, position[1] - 1, message[2]);
                 }
             }
         }
@@ -295,6 +339,23 @@ public class NetworkedServer : MonoBehaviour
         }
     }
 
+    IEnumerator GameRooms()
+    {
+        yield return new WaitForSeconds(2f);
+        if (gameRooms.Count > 0)
+        {
+            foreach (var room in gameRooms)
+            {
+                Debug.Log("Room : " + room.roomName);
+            }
+        }
+
+        StartCoroutine(GameRooms());
+    }
+    private void LoadGames(int gameID)
+    {
+        
+    }
     private void SpectatorJoin()
     {
         throw new NotImplementedException();
