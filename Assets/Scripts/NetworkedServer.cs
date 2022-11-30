@@ -349,6 +349,11 @@ public class NetworkedServer : MonoBehaviour
         var fileInfo = Directory.GetFiles(Application.persistentDataPath + "/" + "Replays");
 
 
+        foreach (var files in fileInfo)
+        {
+            Debug.Log(files);
+        }
+
         if (fileInfo.Length <= 0)
             return;
 
@@ -400,6 +405,7 @@ public class NetworkedServer : MonoBehaviour
 
             foreach (var move in moves)
             {
+                Debug.Log(_message.GetReplays + ","  + roomName + "," + winner + "," + move.pos + "," + move.identifier);
                 SendMessageToClient(_message.GetReplays + ","  + roomName + "," + winner + "," + move.pos + "," + move.identifier, id);
             }
         }
