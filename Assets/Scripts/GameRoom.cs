@@ -250,16 +250,20 @@ public class GameRoom
     }
 }
 
-
-
-public class EnumHelper : Attribute
+public struct Move
 {
-    public Type EnumType;
-    public EnumHelper(Type enumType)
+
+    public Move(string position, string id)
     {
-        EnumType = enumType;
+        pos = position;
+        identifier = id;
     }
+    
+    
+    public string pos;
+    public string identifier;
 }
+
 
 
 

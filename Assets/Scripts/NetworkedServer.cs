@@ -31,9 +31,7 @@ public class NetworkedServer : MonoBehaviour
             return instance;
         }
     }
-    [EnumHelper(typeof(TileType))]
-    public TileType Tiles { get; set; }
-    
+
     int maxConnections = 1000;
     int reliableChannelID;
     int unreliableChannelID;
@@ -337,8 +335,75 @@ public class NetworkedServer : MonoBehaviour
         {
             
         }
+        else if (message[0] == _message.GetReplays)
+        {
+            GetReplays(id);
+        }
     }
 
+
+
+    private void GetReplays(int id)
+    {
+        
+        var fileInfo = Directory.GetFiles(Application.persistentDataPath + "/" + "Replays");
+
+
+        if (fileInfo.Length <= 0)
+            return;
+
+
+        foreach (var file in fileInfo)
+        {
+            //Read in information... we will filter it on client end using room name.
+            List<Move> moves;
+            moves = new List<Move>();
+            
+            
+            string roomName = null;
+            int ID;
+            string winner = null;
+            
+            StreamReader sr = new StreamReader(file);
+
+            string line;
+
+            while ((line = sr.ReadLine()) != null)
+            {
+                
+               
+
+                int moveCount;
+
+                string[] stats = line.Split(',');
+
+                if (stats[0] == "name")
+                {
+                    roomName = stats[1];
+                }
+                else if (stats[0] == "ID")
+                {
+                    ID = Convert.ToInt32(stats[1]);
+                }
+                else if (stats[0] == "Winner")
+                {
+                    winner = stats[1];
+                }
+                else if (stats[0] == "Move")
+                {
+                    
+                    moves.Add(new Move(stats[1], stats[2]));
+                }
+                
+
+            }
+
+            foreach (var move in moves)
+            {
+                SendMessageToClient(_message.GetReplays + ","  + roomName + "," + winner + "," + move.pos + "," + move.identifier, id);
+            }
+        }
+    }
     IEnumerator GameRooms()
     {
         yield return new WaitForSeconds(2f);
