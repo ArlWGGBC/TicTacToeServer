@@ -9,13 +9,16 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(PlayerData))]
 public class NetworkedServer : MonoBehaviour
 {
     private static NetworkedServer instance = null;
 
+    private PlayerData _playerData;
     private NetworkedServer()
     {
     }
@@ -47,6 +50,10 @@ public class NetworkedServer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
+
+        _playerData = GetComponentInChildren<PlayerData>();
+        
         instance = this;
 
         NetworkTransport.Init();
@@ -339,10 +346,35 @@ public class NetworkedServer : MonoBehaviour
         {
             GetReplays(id);
         }
+        else if (message[0] == _message.CreateAccount)
+        {
+            _playerData.Name = message[1];
+            _playerData.Password = message[2];
+            if (_playerData.SaveAccount())
+            {
+                SendMessageToClient(_message.CreateAccount + "," + "1", id);
+
+            }
+            else
+            {
+                SendMessageToClient(_message.CreateAccount + "," + "0", id);
+            }
+            
+        }
+        else if (message[0] == _message.LoginAccount)
+        {
+            if (_playerData.LoginAccount(message[1], message[2]))
+            {
+                SendMessageToClient(_message.LoginAccount + "," + "1", id);
+            }
+            else
+            {
+                SendMessageToClient(_message.LoginAccount + "," + "0", id);
+            }
+        }
     }
 
-
-
+    
     private void GetReplays(int id)
     {
         
