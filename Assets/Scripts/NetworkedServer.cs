@@ -230,7 +230,6 @@ public class NetworkedServer : MonoBehaviour
                 {
 
                     List<string> ds = new List<string>();
-                    if (ds == null) throw new ArgumentNullException(nameof(ds));
 
                     //Create list of all players/spec inside game to send message to them to update UI.
                     foreach (var playerID in room.playerIDs)
@@ -256,7 +255,7 @@ public class NetworkedServer : MonoBehaviour
                         }
                     }
 
-                    if (room.playerIDs.Count == 0)
+                    if (room.playerIDs.Count <= 0)
                     {
                         gameRooms.Remove(room);
                     }
@@ -292,6 +291,7 @@ public class NetworkedServer : MonoBehaviour
             foreach (var room in gameRooms)
             {
                 Debug.Log("Roomname" + room.roomName + "   message :" + message[1]);
+                
                 //TODO : Fix identifier logic
                 if (room.roomName == message[1])
                 {
